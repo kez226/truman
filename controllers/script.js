@@ -41,12 +41,14 @@ exports.getScript = async(req, res, next) => {
             user.study_days[current_day] += 1;
             user.save();
         }
-
+        console.log("time diff is "+ time_diff +" and time limit is "+time_limit)
         // Array of actor posts that match the user's experimental condition, within the past 24 hours, sorted by descending time. 
-        let script_feed = await Script.find({
-                condition: { "$in": ["", user.experimentalCondition] }
-            })
-            .where('time').lte(time_diff).gte(time_limit)
+        let script_feed = await Script.find(
+            //{
+   //             condition: { "$in": ["", user.experimentalCondition] }
+     //       })
+            //.where('time').lte(time_diff).gte(time_limit)
+        ).where('time').lte(time_diff).gte(time_limit)
             .sort('-time')
             .populate('actor')
             .populate('comments.actor')

@@ -1,1 +1,12 @@
 userPostID,userReplyID,type,actor,time,condition,class
+1,0,like,GracieP,1:00,1,
+1,0,like,JamesS,2:00,1,
+1,0,like,VioletO,0:25,1,
+1,0,like,HazelS,0:30,1,
+1,0,like,BrianD,2:35,1,
+2,1,like,AimeeL,0:45,2,
+3,2,like,GracieP,0:25,3,
+3,2,like,EmieY,1:05,3,
+3,2,like,VioletO,1:25,3,
+3,2,like,LizzyW,2:30,3,
+4,3,like,MarinaT,0:45,4,

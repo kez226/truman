@@ -174,6 +174,7 @@ async function doPopulate() {
                                 likes: new_post.likes || getLikes(),
                                 actor: act,
                                 time: timeStringToNum(new_post.time) || null,
+                                display_time: new_post.display_time || '', // <-- NEW FIELD ADDED BY VICKY
                                 class: new_post.class,
                                 condition: new_post.condition
                             }
@@ -229,6 +230,7 @@ async function doPopulate() {
                                     likes: new_reply.likes || getLikesComment(),
                                     actor: act,
                                     time: replyTime,
+                                    display_time: new_reply.display_time || '', // <-- NEW FIELD ADDED BY VICKY
                                     class: new_reply.class,
                                     condition: new_reply.condition
                                 };
@@ -279,7 +281,7 @@ async function doPopulate() {
                             const notifydetail = {
                                 actor: act,
                                 notificationType: 'reply',
-                                time: timeStringToNum(new_post.time) || null,
+                                time: timeStringToNum(new_notify.time) || null,
                                 userPostID: new_notify.userPostID,
                                 replyBody: new_notify.body,
                                 class: new_notify.class,
@@ -323,7 +325,7 @@ async function doPopulate() {
                             const notifydetail = {
                                 actor: act,
                                 notificationType: new_notify.type,
-                                time: timeStringToNum(new_post.time) || null,
+                                time: timeStringToNum(new_notify.time) || null,
                                 class: new_notify.class,
                                 condition: new_notify.condition
                             };
@@ -339,19 +341,20 @@ async function doPopulate() {
                             const notify = new Notification(notifydetail);
                             try {
                                 await notify.save();
+                                // callback();
                             } catch (err) {
                                 console.log(color_error, "ERROR: Something went wrong with saving notification(like, read) in database");
                                 callback(err);
                             }
                         } else { //Else no actor found
                             console.log(color_error, "ERROR: Actor not found in database");
-                            callback();
+                            // callback();
                         }
                     },
                     function(err) {
                         if (err) {
                             console.log(color_error, "ERROR: Something went wrong with saving notifications in database");
-                            callback(err);
+                            reject(err);
                         }
                         // Return response
                         console.log(color_success, "All notifications added to database!");
