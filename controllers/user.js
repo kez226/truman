@@ -161,7 +161,7 @@ exports.postSignupInfo = async(req, res, next) => {
     try {
         const user = await User.findById(req.user.id).exec();
         user.profile.name = req.body.name.trim() || '';
-        user.profile.location = req.body.location.trim() || '';
+        // user.profile.location = req.body.location.trim() || '';
         user.profile.bio = req.body.bio.trim() || '';
         if (req.file) {
             user.profile.picture = req.file.filename;
@@ -231,7 +231,7 @@ exports.postUpdateProfile = async(req, res, next) => {
         const user = await User.findById(req.user.id).exec();
         user.email = req.body.email || '';
         user.profile.name = req.body.name.trim() || '';
-        user.profile.location = req.body.location.trim() || '';
+        // user.profile.location = req.body.location.trim() || '';
         user.profile.bio = req.body.bio.trim() || '';
         if (req.file) {
             user.profile.picture = req.file.filename;

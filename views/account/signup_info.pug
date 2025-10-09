@@ -15,13 +15,9 @@ block content
           else
             img#imgInp.ui.small.image(src=user.gravatar(60))
         input#picinput(type='file', accept='image/*', capture='camera', name='picinput')
-      .inline.fields(style='padding-top: 10px !important;')
-        .ten.wide.field
-          label(for='name') Name
-          input.form-control(type='text', name='name', id='name', value=user.profile.name)
-        .six.wide.field
-          label(for='location') Location
-          input.form-control(type='text', name='location', id='location', value=user.profile.location)
+      .field(style='padding-top: 10px !important;')
+        label(for='name') Name
+        input.form-control(type='text', name='name', id='name', value=user.profile.name)
       .field
         label(for='bio') Bio
         textarea(rows='2', name='bio', id='bio')=user.profile.bio
