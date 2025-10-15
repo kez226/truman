@@ -173,7 +173,7 @@ async function doPopulate() {
                                 picture: new_post.picture,
                                 likes: new_post.likes || getLikes(),
                                 actor: act,
-                                time: timeStringToNum(new_post.time) || null,
+                                time: timeStringToNum(new_post.time),
                                 display_time: new_post.display_time || '', // <-- NEW FIELD ADDED BY VICKY
                                 class: new_post.class,
                                 condition: new_post.condition
@@ -281,7 +281,7 @@ async function doPopulate() {
                             const notifydetail = {
                                 actor: act,
                                 notificationType: 'reply',
-                                time: timeStringToNum(new_notify.time) || null,
+                                time: timeStringToNum(new_notify.time),
                                 userPostID: new_notify.userPostID,
                                 replyBody: new_notify.body,
                                 class: new_notify.class,
@@ -325,7 +325,7 @@ async function doPopulate() {
                             const notifydetail = {
                                 actor: act,
                                 notificationType: new_notify.type,
-                                time: timeStringToNum(new_notify.time) || null,
+                                time: timeStringToNum(new_notify.time),
                                 class: new_notify.class,
                                 condition: new_notify.condition
                             };
