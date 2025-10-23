@@ -13,13 +13,16 @@ dotenv.config({ path: '.env' }); // See the file .env.example for the structure 
 exports.getScript = async(req, res, next) => {
     try {
         const one_day = 86400000; // Number of milliseconds in a day.
-        const time_now = Date.now(); // Current date.
-        const time_diff = time_now - req.user.createdAt; // Time difference between now and user account creation, in milliseconds.
+        const account_created_ms = new Date(req.user.createdAt).getTime();
+        const time_diff = Date.now() - account_created_ms;
         const time_limit = time_diff - one_day; // Date in milliseconds 24 hours ago from now. This is used later to show posts only in the past 24 hours.
 
         const user = await User.findById(req.user.id)
             .populate('posts.comments.actor')
             .exec();
+
+        const userCreation = new Date(user.createdAt).getTime();
+        const timeDiff = Date.now() - userCreation;
 
         // If the user is no longer active, sign the user out.
         if (!user.active) {
@@ -42,15 +45,30 @@ exports.getScript = async(req, res, next) => {
             user.save();
         }
         
-        // Array of actor posts that match the user's experimental condition, within the past 24 hours, sorted by descending time. 
-        let script_feed = await Script.find({
-                condition: { "$in": ["", user.experimentalCondition] }
-            })
-            .where('time').lte(time_diff).gte(time_limit)
-            .sort('-time')
-            .populate('actor')
-            .populate('comments.actor')
-            .exec();
+        // Fetch all posts where condition matches or is blank
+        // Include posts with display_time defined OR time <= timeDiff (including time=0)
+        const script_feed = await Script.find({
+            $or: [
+            { condition: "" },
+            { condition: user.experimentalCondition },
+            ],
+            $or: [
+            { display_time: { $ne: "" } },
+            { time: { $lte: timeDiff, $gte: 0 } },
+            ],
+        })
+        .sort({ time: 1 })
+        .populate({
+            path: "actor",
+            select: "username profile",
+            populate: { path: "profile", select: "name picture" }, // ensure nested profile fields
+        })
+        .populate({
+            path: "comments.actor",
+            select: "username profile",
+            populate: { path: "profile", select: "name picture" },
+        })
+        .exec();
 
         // Array of any user-made posts within the past 24 hours, sorted by time they were created.
         let user_posts = user.getPostInPeriod(time_limit, time_diff);
