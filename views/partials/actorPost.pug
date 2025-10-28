@@ -1,6 +1,7 @@
 .ui.fluid.card(postCondition=val.condition, postID=val.id, type='actor', actor_un = val.actor.username, actor_name = val.actor.profile.name, actor_pic = val.actor.profile.picture)
   .content
     //- for display_time 
+    //- tip from prof: do string conversion
     .right.floated.time.meta= val.display_time || (user.createdAt.getTime() + val.time) 
     a(href='/user/'+val.actor.username)     
       img.ui.avatar.image(src='/public/picture.svg', data-src=cdn+"/profile_pictures/"+val.actor.profile.picture)
