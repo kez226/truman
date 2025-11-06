@@ -52,5 +52,6 @@ block content
 block scripts
   script().
     let numComments = !{JSON.stringify(user.numComments)};
+    alert("Before interacting with other posts, please make a post first!");
   script(src='/public/js/script.js')
   script(src='/public/js/postFunctionalities.js')
