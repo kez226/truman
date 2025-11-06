@@ -25,7 +25,7 @@
             .left.menu
               if user.consent
                 a.item(href='/me') My Profile
-                a.item(href='/account') Update My Profile
+                //- a.item(href='/account') Update My Profile
                 if user.isAdmin
                   a.item(href='/completed') Study Progress
                   a.item(href='/actors') Simulation (Actors)
@@ -57,7 +57,7 @@
         .left.menu
           if user.consent
             a.item(href='/me') My Profile
-            a.item(href='/account') Update My Profile
+            //- a.item(href='/account') Update My Profile
             if user.isAdmin
               a.item(href='/completed') Study Progress
               a.item(href='/actors') Simulation (Actors)

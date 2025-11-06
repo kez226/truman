@@ -20,8 +20,17 @@ exports.getScript = async(req, res, next) => {
         const user = await User.findById(req.user.id)
             .populate('posts.comments.actor')
             .exec();
+        // Normalize createdAt
+        let createdAtDate;
+        if (user.createdAt instanceof Date) {
+            createdAtDate = user.createdAt;
+        } else if (user.createdAt.$date) {
+            createdAtDate = new Date(user.createdAt.$date);
+        } else {
+            createdAtDate = new Date(user.createdAt); // fallback
+        }
 
-        const userCreation = new Date(user.createdAt).getTime();
+        const userCreation = createdAtDate.getTime();
         const timeDiff = Date.now() - userCreation;
 
         // If the user is no longer active, sign the user out.
@@ -79,7 +88,7 @@ exports.getScript = async(req, res, next) => {
         // Get the newsfeed and render it.
         const finalfeed = helpers.getFeed(user_posts, script_feed, user, process.env.FEED_ORDER, (process.env.REMOVE_FLAGGED_CONTENT == 'TRUE'), true);
         console.log("Script Size is now: " + finalfeed.length);
-        res.render('script', { script: finalfeed, showNewPostIcon: true });
+        res.render('script', { script: finalfeed, showNewPostIcon: true, createdAtDate: createdAtDate.getTime() });
     } catch (err) {
         next(err);
     }

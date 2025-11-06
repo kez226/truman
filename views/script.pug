@@ -40,7 +40,7 @@ block content
       form#postform.ui.feed.form(action='/post/new', method='POST', enctype='multipart/form-data')
         input(type='hidden', name='_csrf', value=_csrf)
         .field
-          textarea(rows='2', placeholder='Share your meal', name='body')
+          textarea(rows='2', placeholder='Create Post', name='body')
         .field.image-upload
           label(for='picinput')
             .image.content
