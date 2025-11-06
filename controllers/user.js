@@ -21,44 +21,81 @@ exports.getLogin = (req, res) => {
 
 /**
  * POST /login
- * Handles user sign in using email and password.
+ * Handles user sign in using mturkID NOT email and password. 
  */
-exports.postLogin = (req, res, next) => {
-    const validationErrors = [];
-    if (!validator.isEmail(req.body.email)) validationErrors.push({ msg: 'Please enter a valid email address.' });
-    if (validator.isEmpty(req.body.password)) validationErrors.push({ msg: 'Password cannot be blank.' });
+exports.postLogin = async (req, res, next) => {
+    const mturkID = req.body.mturkID?.trim();
 
-    if (validationErrors.length) {
-        req.flash('errors', validationErrors);
+    if (!mturkID) {
+        req.flash('errors', { msg: 'Please enter your Researcher ID (MTurk ID).' });
         return res.redirect('/login');
     }
-    req.body.email = validator.normalizeEmail(req.body.email, { gmail_remove_dots: false });
-    passport.authenticate('local', (err, user, info) => {
-        const study_length = 86400000 * process.env.NUM_DAYS; // Milliseconds in NUM_DAYS days
-        const time_diff = Date.now() - user.createdAt; // Time difference between now and account creation.
-        if (err) { return next(err); }
+
+    try {
+        let user = await User.findOne({ mturkID }).exec();
+
+        // If no user found, create a new one automatically
         if (!user) {
-            req.flash('errors', info);
-            return res.redirect('/login');
-        }
-        if (!(user.active) || ((time_diff >= study_length) && !user.isAdmin)) {
-            const endSurveyLink = user.endSurveyLink;
-            req.flash('final', { msg: endSurveyLink });
-            return res.redirect('/login');
-        }
-        req.logIn(user, (err) => {
-            if (err) { return next(err); }
-            const time_now = Date.now();
-            const userAgent = req.headers['user-agent'];
-            const user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-            user.logUser(time_now, userAgent, user_ip);
-            if (user.consent) {
-                res.redirect(req.session.returnTo || '/');
-            } else {
-                res.redirect('/account/signup_info');
-            }
+        const currDate = Date.now();
+        user = new User({
+            username: `Researcher_${mturkID}`,
+            mturkID,
+            active: true,
+            createdAt: currDate,
+            lastNotifyVisit: currDate,
+            consent: true
         });
-    })(req, res, next);
+        await user.save();
+        }
+
+        // Log them in manually
+        req.logIn(user, (err) => {
+        if (err) return next(err);
+
+        const userAgent = req.headers['user-agent'];
+        const user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        user.logUser(Date.now(), userAgent, user_ip);
+
+        return res.redirect(req.session.returnTo || '/');
+        });
+    } catch (err) {
+        next(err);
+    }
+    // const validationErrors = [];
+    // if (!validator.isEmail(req.body.email)) validationErrors.push({ msg: 'Please enter a valid email address.' });
+    // if (validator.isEmpty(req.body.password)) validationErrors.push({ msg: 'Password cannot be blank.' });
+
+    // if (validationErrors.length) {
+    //     req.flash('errors', validationErrors);
+    //     return res.redirect('/login');
+    // }
+    // req.body.email = validator.normalizeEmail(req.body.email, { gmail_remove_dots: false });
+    // passport.authenticate('local', (err, user, info) => {
+    //     const study_length = 86400000 * process.env.NUM_DAYS; // Milliseconds in NUM_DAYS days
+    //     const time_diff = Date.now() - user.createdAt; // Time difference between now and account creation.
+    //     if (err) { return next(err); }
+    //     if (!user) {
+    //         req.flash('errors', info);
+    //         return res.redirect('/login');
+    //     }
+    //     if (!(user.active) || ((time_diff >= study_length) && !user.isAdmin)) {
+    //         const endSurveyLink = user.endSurveyLink;
+    //         req.flash('final', { msg: endSurveyLink });
+    //         return res.redirect('/login');
+    //     }
+    //     req.logIn(user, (err) => {
+    //         if (err) { return next(err); }
+    //         const time_now = Date.now();
+    //         const userAgent = req.headers['user-agent'];
+    //         const user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    //         user.logUser(time_now, userAgent, user_ip);
+    //         if (user.consent) {
+    //             res.redirect(req.session.returnTo || '/');
+    //         } else {
+    //             res.redirect('/account/signup_info');
+    //         }
+    //     });
+    // })(req, res, next);
 };
 
 /**
