@@ -61,10 +61,10 @@
           //- Else this is a normal comment from the script
           else
             .comment(commentID=comment.id)
-              //- .content(class=!comment.flagged ? "transition hidden" : "")                           
-              //-   .text(style="background-color: black; color: white; padding: 0.2em;")  You flagged this comment. The admins will review this comment further. We are sorry you had this experience.
-              //-   .actions 
-              //-     a.unflag Unflag
+              .content(class=!comment.flagged ? "transition hidden" : "")                           
+                .text(style="background-color: black; color: white; padding: 0.2em;")  You flagged this comment. The admins will review this comment further. We are sorry you had this experience.
+                .actions 
+                  a.unflag Unflag
               a.avatar(href='/user/'+comment.actor.username, class=comment.flagged ? "transition hidden" : "")                  
                 img(src='/public/picture.svg', data-src=cdn+"/profile_pictures/"+comment.actor.profile.picture)
               .content(class=comment.flagged ? "transition hidden" : "")
@@ -77,9 +77,9 @@
                     span.num=comment.likes+(comment.liked ? 1 : 0)
                     |  Likes
                 .text=comment.body
-                .actions
-                  a.like.comment(class=comment.liked ? "red" : null ) !{comment.liked ? "Unlike" : "Like"}
-                  a.flag.comment Flag
+                //- .actions
+                //-   a.like.comment(class=comment.liked ? "red" : null ) !{comment.liked ? "Unlike" : "Like"}
+                //-   a.flag.comment Flag
   .extra.content
     .ui.fluid.left.labeled.right.icon.input
       .ui.label
