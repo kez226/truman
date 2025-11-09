@@ -61,12 +61,19 @@ exports.getFeed = function(user_posts, script_feed, user, order, removeFlaggedCo
                 finalfeed.push(user_posts[0]);
                 user_posts.splice(0, 1);
             }
-        } else {
+        } else { // Commented out filters for now to get comments to show for now. Will have to update for condition later. 
             // Filter comments to include only comments labeled with the experimental condition the user is in.
-            script_feed[0].comments = script_feed[0].comments.filter(comment => !comment.condition || comment.condition == user.experimentalCondition);
+            // script_feed[0].comments = script_feed[0].comments.filter(comment => !comment.condition || comment.condition == user.experimentalCondition);
 
             // Filter comments to include only past simulated comments, not future simulated comments.
-            script_feed[0].comments = script_feed[0].comments.filter(comment => user.createdAt.getTime() + comment.time < Date.now());
+            // Keep all comments unless they are clearly future-scheduled
+            // script_feed[0].comments = script_feed[0].comments.filter(comment => {
+            //     // if comment has no time or invalid time, keep it
+            //     if (comment.time == null || isNaN(comment.time)) return true;
+            //     // otherwise, only filter if it's truly in the future
+            //     return user.createdAt.getTime() + comment.time < Date.now();
+            // });
+
 
             // Check if the user has interacted with this post by checking if a user.feedAction.post value matches this script_feed[0]'s _id. 
             // If the user has interacted with this post, add the user's interactions to the post.
