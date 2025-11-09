@@ -22,6 +22,10 @@
 
 
 function humanized_time_span(date, ref_date, date_formats, time_units) {
+  // ✅ Guard against invalid date input
+  if (!date || isNaN(new Date(date).getTime())) {
+    return (typeof date === "string" ? date : ""); // do not convert non-numeric timestamps
+  }
   //Date Formats must be be ordered smallest -> largest and must end in a format with ceiling of null
   date_formats = date_formats || {
     past: [

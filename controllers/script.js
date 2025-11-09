@@ -10,89 +10,115 @@ dotenv.config({ path: '.env' }); // See the file .env.example for the structure 
  * GET /
  * Fetch and render newsfeed.
  */
-exports.getScript = async(req, res, next) => {
-    try {
-        const one_day = 86400000; // Number of milliseconds in a day.
-        const account_created_ms = new Date(req.user.createdAt).getTime();
-        const time_diff = Date.now() - account_created_ms;
-        const time_limit = time_diff - one_day; // Date in milliseconds 24 hours ago from now. This is used later to show posts only in the past 24 hours.
+exports.getScript = async (req, res, next) => {
+  try {
+    const one_day = 86400000;
+    const account_created_ms = new Date(req.user.createdAt).getTime();
+    const time_diff = Date.now() - account_created_ms;
+    const time_limit = time_diff - one_day;
 
-        const user = await User.findById(req.user.id)
-            .populate('posts.comments.actor')
-            .exec();
-        // Normalize createdAt
-        let createdAtDate;
-        if (user.createdAt instanceof Date) {
-            createdAtDate = user.createdAt;
-        } else if (user.createdAt.$date) {
-            createdAtDate = new Date(user.createdAt.$date);
-        } else {
-            createdAtDate = new Date(user.createdAt); // fallback
-        }
+    const user = await User.findById(req.user.id)
+      .populate("posts.comments.actor")
+      .exec();
 
-        const userCreation = createdAtDate.getTime();
-        const timeDiff = Date.now() - userCreation;
-
-        // If the user is no longer active, sign the user out.
-        if (!user.active) {
-            req.logout((err) => {
-                if (err) console.log('Error : Failed to logout.', err);
-                req.session.destroy((err) => {
-                    if (err) console.log('Error : Failed to destroy the session during logout.', err);
-                    req.user = null;
-                    req.flash('errors', { msg: 'Account is no longer active. Study is over.' });
-                    res.redirect('/login' + (req.query.r_id ? `?r_id=${req.query.r_id}` : ""));
-                });
-            });
-        }
-
-        // What day in the study is the user in? 
-        // Update study_days, which tracks the number of time user views feed.
-        const current_day = Math.floor(time_diff / one_day);
-        if (current_day < process.env.NUM_DAYS) {
-            user.study_days[current_day] += 1;
-            user.save();
-        }
-        
-        // Fetch all posts where condition matches or is blank
-        // Include posts with display_time defined OR time <= timeDiff (including time=0)
-        const script_feed = await Script.find({
-            $or: [
-            { condition: "" },
-            { condition: user.experimentalCondition },
-            ],
-            $or: [
-            { display_time: { $ne: "" } },
-            { time: { $lte: timeDiff, $gte: 0 } },
-            ],
-        })
-        .sort({ time: 1 })
-        .populate({
-            path: "actor",
-            select: "username profile",
-            populate: { path: "profile", select: "name picture" }, // ensure nested profile fields
-        })
-        .populate({
-            path: "comments.actor",
-            select: "username profile",
-            populate: { path: "profile", select: "name picture" },
-        })
-        .exec();
-
-        // Array of any user-made posts within the past 24 hours, sorted by time they were created.
-        let user_posts = user.getPostInPeriod(time_limit, time_diff);
-        user_posts.sort(function(a, b) {
-            return b.relativeTime - a.relativeTime;
-        });
-
-        // Get the newsfeed and render it.
-        const finalfeed = helpers.getFeed(user_posts, script_feed, user, process.env.FEED_ORDER, (process.env.REMOVE_FLAGGED_CONTENT == 'TRUE'), true);
-        console.log("Script Size is now: " + finalfeed.length);
-        res.render('script', { script: finalfeed, showNewPostIcon: true, createdAtDate: createdAtDate.getTime() });
-    } catch (err) {
-        next(err);
+    // Normalize createdAt into a real Date
+    let createdAtDate;
+    if (user.createdAt instanceof Date) {
+      createdAtDate = user.createdAt;
+    } else if (user.createdAt.$date) {
+      createdAtDate = new Date(user.createdAt.$date);
+    } else {
+      createdAtDate = new Date(user.createdAt);
     }
+    const baseTime = createdAtDate.getTime();
+
+    // If the user is no longer active, log them out
+    if (!user.active) {
+      req.logout((err) => {
+        if (err) console.log("Error : Failed to logout.", err);
+        req.session.destroy((err) => {
+          if (err)
+            console.log(
+              "Error : Failed to destroy the session during logout.",
+              err
+            );
+          req.user = null;
+          req.flash("errors", {
+            msg: "Account is no longer active. Study is over.",
+          });
+          res.redirect(
+            "/login" + (req.query.r_id ? `?r_id=${req.query.r_id}` : "")
+          );
+        });
+      });
+    }
+
+    const current_day = Math.floor(time_diff / one_day);
+    if (current_day < process.env.NUM_DAYS) {
+      user.study_days[current_day] += 1;
+      user.save();
+    }
+
+    const script_feed = await Script.find({
+      $or: [{ condition: "" }, { condition: user.experimentalCondition }],
+      $or: [{ display_time: { $ne: null } }, { time: { $lte: time_diff, $gte: 0 } }],
+    })
+      .sort({ time: 1 })
+      .populate({
+        path: "actor",
+        select: "username profile",
+        populate: { path: "profile", select: "name picture" },
+      })
+      .populate({
+        path: "comments.actor",
+        select: "username profile",
+        populate: { path: "profile", select: "name picture" },
+      })
+      .exec();
+
+    // ✅ PRE-COMPUTE display_time server-side for all actor posts + comments
+    for (const post of script_feed) {
+      if (!post.display_time) {
+        const offset = Number(post.time) || 0;
+        post.display_time = new Date(baseTime + offset).toLocaleString();
+      }
+
+      // ensure comments also get valid timestamps
+      if (Array.isArray(post.comments)) {
+        post.comments.forEach((c) => {
+          if (!c.display_time) {
+            const offset = Number(c.time) || 0;
+            c.display_time = new Date(baseTime + offset).toLocaleString();
+          }
+        });
+      }
+    }
+
+    let user_posts = user.getPostInPeriod(time_limit, time_diff);
+    user_posts.sort((a, b) => b.relativeTime - a.relativeTime);
+
+    const finalfeed = helpers.getFeed(
+      user_posts,
+      script_feed,
+      user,
+      process.env.FEED_ORDER,
+      process.env.REMOVE_FLAGGED_CONTENT == "TRUE",
+      true
+    );
+
+    console.log("Script Size is now: " + finalfeed.length);
+
+    // ✅ Nothing for Pug to calculate anymore
+    res.render("script", {
+      script: finalfeed,
+      showNewPostIcon: true,
+      userCreatedAt: createdAtDate,
+    });
+  } catch (err) {
+    next(err);
+  }
 };
+
 
 /*
  * Post /post/new

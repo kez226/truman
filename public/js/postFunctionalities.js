@@ -280,11 +280,22 @@ function followUser(e) {
 }
 
 $(window).on('load', () => {
-    // add humanized time to all posts
+    // add humanized time to all posts, UPSATED TO WORK FOR DISPLAY_TIME STRING TOO
     $('.right.floated.time.meta, .date').each(function() {
-        const ms = parseInt($(this).text(), 10);
-        const time = new Date(ms);
-        $(this).text(humanized_time_span(time));
+        const raw = $(this).text().trim();
+
+        // ✅ Case 1: Already a formatted date string (ex: "July 9 8:04 PM")
+        // Leave it alone.
+        if (isNaN(raw) && !isNaN(Date.parse(raw))) {
+            return;
+        }
+
+        // ✅ Case 2: Numeric timestamp → convert it
+        const ms = Number(raw);
+        if (!isNaN(ms)) {
+            const formatted = humanized_time_span(new Date(ms));
+            $(this).text(formatted);
+        }
     });
 
     // ************ Actions on Main Post ***************

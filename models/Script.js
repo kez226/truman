@@ -8,7 +8,7 @@ const scriptSchema = new mongoose.Schema({
     likes: Number, // Indicates the number of likes on the post (randomly assigned in populate.js)
     actor: { type: Schema.ObjectId, ref: 'Actor' }, // Actor of post
     time: Number, // Indicates when the post was created relative to how much time has passed since the user created their account, in milliseconds
-    display_time: { type: String, default: '' }, // <-- NEW FIELD ADDED BY VICKY
+    display_time: { type: String, default: null }, // <-- NEW FIELD ADDED BY VICKY
 
     class: {
         type: String,
