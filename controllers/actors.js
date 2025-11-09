@@ -42,12 +42,20 @@ exports.getActor = async(req, res, next) => {
         }
         const isBlocked = user.blocked.includes(req.params.userId);
         const isReported = user.reported.includes(req.params.userId);
-        const script_feed = await Script.find({ actor: actor.id, condition: { "$in": ["", user.experimentalCondition] } })
-            .where('time').lte(time_diff)
-            .sort('-time')
-            .populate('actor')
-            .populate('comments.actor')
-            .exec();
+
+        // Fixed query to show actor posts when clicking on specific profiles. May have to update for condition later. 
+        const script_feed = await Script.find({ actor: actor._id })
+        .populate({
+            path: "actor",
+            select: "username profile",
+            populate: { path: "profile", select: "name picture" },
+        })
+        .populate({
+            path: "comments.actor",
+            select: "username profile",
+            populate: { path: "profile", select: "name picture" },
+        })
+        .exec();
 
         const finalfeed = helpers.getFeed([], script_feed, user, 'CHRONOLOGICAL', (process.env.REMOVE_FLAGGED_CONTENT == 'TRUE'), false);
         await user.save();
