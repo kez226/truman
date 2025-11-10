@@ -59,8 +59,11 @@ exports.getScript = async (req, res, next) => {
       user.save();
     }
 
+    const currentCondition = 3; 
+    console.log("Hardcoded condition:", currentCondition);
+
     const script_feed = await Script.find({
-      $or: [{ condition: "" }, { condition: user.experimentalCondition }],
+      condition: String(currentCondition), // match "1", "2", etc.
       $or: [{ display_time: { $ne: null } }, { time: { $lte: time_diff, $gte: 0 } }],
     })
       .sort({ time: 1 })
@@ -107,6 +110,7 @@ exports.getScript = async (req, res, next) => {
     );
 
     console.log("Script Size is now: " + finalfeed.length);
+    console.log(`Rendering Condition ${currentCondition} — ${script_feed.length} posts found`);
 
     // ✅ Nothing for Pug to calculate anymore
     res.render("script", {
