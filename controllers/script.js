@@ -66,7 +66,7 @@ exports.getScript = async (req, res, next) => {
       condition: String(currentCondition), // match "1", "2", etc.
       $or: [{ display_time: { $ne: null } }, { time: { $lte: time_diff, $gte: 0 } }],
     })
-      .sort({ time: 1 })
+      .sort({ time: -1 })
       .populate({
         path: "actor",
         select: "username profile",
