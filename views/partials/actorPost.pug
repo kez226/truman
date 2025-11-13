@@ -71,10 +71,10 @@
                 .metadata
                   //- uses dispaly_time for script generated comments
                   span.date= (user.createdAt.getTime() + comment.time) 
-                  .rating
-                    i.heart.icon(class=comment.liked ? "red" : null)
-                    span.num=comment.likes+(comment.liked ? 1 : 0)
-                    |  Likes
+                  //- .rating
+                  //-   i.heart.icon(class=comment.liked ? "red" : null)
+                  //-   span.num=comment.likes+(comment.liked ? 1 : 0)
+                  //-   |  Likes
                 .text=comment.body
                 //- .actions
                 //-   a.like.comment(class=comment.liked ? "red" : null ) !{comment.liked ? "Unlike" : "Like"}
