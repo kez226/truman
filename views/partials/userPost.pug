@@ -38,13 +38,13 @@
                   a.author(href='/me')=user.profile.name || user.username || user.id
                   .metadata
                     span.date=(comment.absTime.getTime())
-                    .rating
-                      i.heart.icon(class=comment.liked ? "red" : null)
-                      span.num=comment.likes+(comment.liked ? 1 : 0)
-                      |  Likes
+                    //- .rating
+                    //-   i.heart.icon(class=comment.liked ? "red" : null)
+                    //-   span.num=comment.likes+(comment.liked ? 1 : 0)
+                    //-   |  Likes
                   .text=comment.body
-                  .actions
-                    a.like.comment(class=comment.liked ? "red" : null) !{comment.liked ? "Unlike" : "Like"}
+                  //- .actions
+                  //-   a.like.comment(class=comment.liked ? "red" : null) !{comment.liked ? "Unlike" : "Like"}
             //- Else this is a normal comment from the script
             else
               .comment(commentID=comment.commentID)
@@ -54,14 +54,14 @@
                   a.author(href='/user/'+comment.actor.username)=comment.actor.profile.name
                   .metadata
                     span.date=(comment.absTime.getTime())
-                    .rating
-                      i.heart.icon(class=comment.liked ? "red" : null)
-                      span.num=comment.likes+(comment.liked ? 1 : 0)
-                      |  Likes
+                    //- .rating
+                    //-   i.heart.icon(class=comment.liked ? "red" : null)
+                    //-   span.num=comment.likes+(comment.liked ? 1 : 0)
+                    //-   |  Likes
                   .text=comment.body
-                  .actions
-                    a.like.comment(class=comment.liked ? "red" : null) !{comment.liked ? "Unlike" : "Like"}
-                    a.flag.comment Flag
+                  //- .actions
+                  //-   a.like.comment(class=comment.liked ? "red" : null) !{comment.liked ? "Unlike" : "Like"}
+                  //-   a.flag.comment Flag
   .extra.content
     .ui.fluid.left.labeled.right.icon.input
       .ui.label
