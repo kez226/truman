@@ -123,6 +123,7 @@ async function doPopulate() {
             console.log(color_start, "Starting to populate actors collection...");
             return new Promise((resolve, reject) => {
                 async.each(actors_list, async function(actor_raw, callback) {
+                        // FIX: remove trailing \r from picture field
                         if (actor_raw.picture) {
                             actor_raw.picture = actor_raw.picture.replace(/\r/g, '').trim();
                         }
@@ -168,6 +169,13 @@ async function doPopulate() {
             console.log(color_start, "Starting to populate posts collection...");
             return new Promise((resolve, reject) => {
                 async.each(posts_list, async function(new_post, callback) {
+                        // FIX: remove trailing \r from picture field
+                        if (new_post.picture) {
+                            new_post.picture = new_post.picture
+                                .replace(/[\r\n]/g, '') // remove \r and \n
+                                .replace(/\uFEFF/g, '') // remove invisible UTF BOM
+                                .trim();                // remove leading/trailing spaces
+                        }
                         const act = await Actor.findOne({ username: new_post.actor }).exec();
                         if (act) {
                             const postdetail = {
