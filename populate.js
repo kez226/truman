@@ -123,6 +123,9 @@ async function doPopulate() {
             console.log(color_start, "Starting to populate actors collection...");
             return new Promise((resolve, reject) => {
                 async.each(actors_list, async function(actor_raw, callback) {
+                        if (actor_raw.picture) {
+                            actor_raw.picture = actor_raw.picture.replace(/\r/g, '').trim();
+                        }
                         const actordetail = {
                             username: actor_raw.username,
                             profile: {
