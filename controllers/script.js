@@ -59,14 +59,17 @@ exports.getScript = async (req, res, next) => {
       user.save();
     }
 
-    const currentCondition = 3; 
-    console.log("Hardcoded condition:", currentCondition);
+    const currentCondition = computeCondition(user.createdAt, 15000, 4);
+    console.log("Condition window → now showing condition:", currentCondition);
 
     const script_feed = await Script.find({
-      condition: String(currentCondition), // match "1", "2", etc.
-      $or: [{ display_time: { $ne: null } }, { time: { $lte: time_diff, $gte: 0 } }],
+      condition: String(currentCondition),
+      $or: [
+        { display_time: { $ne: null } },
+        { time: { $lte: time_diff, $gte: 0 } }
+      ],
     })
-      .sort({ time: -1 })
+      .sort({ time: -1 }) // newest → oldest
       .populate({
         path: "actor",
         select: "username profile",
@@ -123,6 +126,12 @@ exports.getScript = async (req, res, next) => {
   }
 };
 
+// Computes which condition the user should currently see
+function computeCondition(userCreatedAt, windowMs = 15000, totalConditions = 4) {
+  const elapsed = Date.now() - new Date(userCreatedAt).getTime();
+  const index = Math.floor(elapsed / windowMs) % totalConditions;
+  return index + 1; // convert 0 → 1-based
+}
 
 /*
  * Post /post/new
