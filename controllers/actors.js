@@ -24,6 +24,12 @@ exports.getActors = async(req, res) => {
     }
 };
 
+function computeCondition(startTime, windowMs = 180000, totalConditions = 4) {
+  const elapsed = Date.now() - new Date(startTime).getTime();
+  const index = Math.floor(elapsed / windowMs) % totalConditions;
+  return index + 1;
+}
+
 /**
  * GET /user/:userId
  * Retrieve the profile and relevant experimental posts of the actor whose username field value matches the query parameter value 'userId'. 
@@ -43,8 +49,14 @@ exports.getActor = async(req, res, next) => {
         const isBlocked = user.blocked.includes(req.params.userId);
         const isReported = user.reported.includes(req.params.userId);
 
+        const currentCondition = computeCondition(user.createdAt, 180000, 4); //15000 for testing, 180000 for real use
+
         // Fixed query to show actor posts when clicking on specific profiles. May have to update for condition later. 
-        const script_feed = await Script.find({ actor: actor._id })
+        const script_feed = await Script.find({
+            actor: actor._id,
+            condition: String(currentCondition),
+        })
+        .sort({ time: -1 }) // ⬅️ sort most recent → oldest
         .populate({
             path: "actor",
             select: "username profile",

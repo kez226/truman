@@ -59,12 +59,48 @@ exports.getScript = async (req, res, next) => {
       user.save();
     }
 
-    const currentCondition = 3; 
-    console.log("Hardcoded condition:", currentCondition);
+    const currentCondition = computeCondition(user.createdAt, 180000, 4); // 15000 for testing, 180000 for real
+    const condState = getConditionState(user.createdAt, 180000, 4); // 15000 for testing, 180000 for real
+    console.log("Condition window →", condState);
 
-    const script_feed = await Script.find({
-      condition: String(currentCondition), // match "1", "2", etc.
-      $or: [{ display_time: { $ne: null } }, { time: { $lte: time_diff, $gte: 0 } }],
+    // END OF EXPERIMENT — after condition 4 finishes
+    if (condState.state === "ended") {
+      return res.render("condition_gate", {
+        title: "End of Experiment",
+        message: "Thank you for participating. The experiment is now complete.",
+        button: null,  // hides button
+        userCreatedAt: user.createdAt
+      });
+    }
+
+    // Pre condition page
+    if (condState.state === "pre") {
+      return res.render("condition_gate", {
+        title: "Before Condition",
+        message: "Please make a post before interacting.",
+        button: "Continue",
+        userCreatedAt: user.createdAt
+      });
+    }
+
+    // Post condition page
+    if (condState.state === "post") {
+      return res.render("condition_gate", {
+        title: "Condition Finished",
+        message: "Please wait for further instructions...",
+        button: "Continue", 
+        userCreatedAt: user.createdAt
+      });
+    }
+
+    let script_feed = [];
+  if (condState.state === "active") {
+    script_feed = await Script.find({
+      condition: String(currentCondition),
+      $or: [
+        { display_time: { $ne: null } },
+        { time: { $lte: time_diff, $gte: 0 } }
+      ],
     })
       .sort({ time: -1 })
       .populate({
@@ -79,14 +115,13 @@ exports.getScript = async (req, res, next) => {
       })
       .exec();
 
-    // ✅ PRE-COMPUTE display_time server-side for all actor posts + comments
+    // compute display_time only when active
     for (const post of script_feed) {
       if (!post.display_time) {
         const offset = Number(post.time) || 0;
         post.display_time = new Date(baseTime + offset).toLocaleString();
       }
 
-      // ensure comments also get valid timestamps
       if (Array.isArray(post.comments)) {
         post.comments.forEach((c) => {
           if (!c.display_time) {
@@ -96,6 +131,7 @@ exports.getScript = async (req, res, next) => {
         });
       }
     }
+  }
 
     let user_posts = user.getPostInPeriod(time_limit, time_diff);
     user_posts.sort((a, b) => b.relativeTime - a.relativeTime);
@@ -122,6 +158,32 @@ exports.getScript = async (req, res, next) => {
     next(err);
   }
 };
+
+// Computes which condition the user should currently see
+function computeCondition(startTime, windowMs = 180000, totalConditions = 4) {
+  const elapsed = Date.now() - new Date(startTime).getTime();
+  const index = Math.floor(elapsed / windowMs) % totalConditions;
+  return index + 1;
+}
+
+function getConditionState(startTime, windowMs = 180000, totalConditions = 4) {
+  const elapsed = Date.now() - new Date(startTime).getTime();
+  const cycleLength = windowMs;
+  const fullExperimentDuration = totalConditions * windowMs;
+
+  // AFTER ALL CONDITIONS
+  if (elapsed >= fullExperimentDuration) {
+      return { state: "ended", condition: totalConditions };
+  }
+  
+  const currentIndex = Math.floor(elapsed / cycleLength) % totalConditions;
+  const elapsedInCycle = elapsed % cycleLength;
+
+  if (elapsedInCycle < 3000) return { state: "pre", condition: currentIndex + 1 };
+  if (elapsedInCycle > cycleLength - 3000) return { state: "post", condition: currentIndex + 1 };
+  return { state: "active", condition: currentIndex + 1 };
+}
+
 
 
 /*
