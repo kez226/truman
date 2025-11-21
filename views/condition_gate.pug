@@ -1,0 +1,23 @@
+extends ui_layout
+
+block content
+  .ui.container.text-center(style="max-width: 520px; margin-top: 60px;")
+
+    h1.ui.header(style="font-size: 2rem; margin-bottom: 20px;")
+      | #{title}
+
+    p(style="font-size: 1.2rem; color: #555; margin-bottom: 40px; white-space: pre-line;")
+      | #{message}
+
+    // SHOW BUTTON ONLY IF button != null
+    if button
+      form(method="get" action="/")
+        button.ui.big.primary.button(type="submit" style="padding: 14px 28px; font-size: 1.2rem;")
+          | #{button}
+    else
+      // END OF EXPERIMENT MESSAGE
+      p(style="font-size: 1.1rem; margin-top: 30px; color: #444;")
+        | This is the end of the experiment. You may now close this window.
+
+block scripts
+  // Optional timer debugging can go here later

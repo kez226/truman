@@ -49,14 +49,19 @@ exports.postLogin = async (req, res, next) => {
         }
 
         // Log them in manually
-        req.logIn(user, (err) => {
-        if (err) return next(err);
+        req.logIn(user, async (err) => {
+            if (err) return next(err);
 
-        const userAgent = req.headers['user-agent'];
-        const user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        user.logUser(Date.now(), userAgent, user_ip);
+            const userAgent = req.headers['user-agent'];
+            const user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-        return res.redirect(req.session.returnTo || '/');
+            // ⭐ Force condition cycle to begin at login
+            user.createdAt = Date.now();
+            await user.save();
+
+            user.logUser(Date.now(), userAgent, user_ip);
+
+            return res.redirect(req.session.returnTo || '/');
         });
     } catch (err) {
         next(err);

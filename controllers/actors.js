@@ -24,10 +24,10 @@ exports.getActors = async(req, res) => {
     }
 };
 
-function computeCondition(userCreatedAt, windowMs = 15000, totalConditions = 4) {
-  const elapsed = Date.now() - new Date(userCreatedAt).getTime();
+function computeCondition(startTime, windowMs = 180000, totalConditions = 4) {
+  const elapsed = Date.now() - new Date(startTime).getTime();
   const index = Math.floor(elapsed / windowMs) % totalConditions;
-  return index + 1; // convert 0-index to 1-index
+  return index + 1;
 }
 
 /**
@@ -49,7 +49,7 @@ exports.getActor = async(req, res, next) => {
         const isBlocked = user.blocked.includes(req.params.userId);
         const isReported = user.reported.includes(req.params.userId);
 
-        const currentCondition = computeCondition(user.createdAt, 15000, 4);
+        const currentCondition = computeCondition(user.createdAt, 180000, 4); //15000 for testing, 180000 for real use
 
         // Fixed query to show actor posts when clicking on specific profiles. May have to update for condition later. 
         const script_feed = await Script.find({

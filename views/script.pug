@@ -51,7 +51,37 @@ block content
           
 block scripts
   script().
-    let numComments = !{JSON.stringify(user.numComments)};
-    alert("Before interacting with other posts, please make a post first!");
+    // Condition timing logic (client-side)
+    function getConditionState(clientStart, windowMs = 180000) {
+      const elapsed = Date.now() - clientStart;
+      const elapsedInCycle = elapsed % windowMs;
+
+      if (elapsedInCycle < 3000) return "pre";
+      if (elapsedInCycle > windowMs - 3000) return "post";
+      return "active";
+    }
+
+    // Load start time from server
+    const userCreatedAtMs = new Date("#{userCreatedAt.toISOString()}").getTime();
+
+    let lastState = getConditionState(userCreatedAtMs);
+
+    // Only reload when crossing *edges*
+    setInterval(() => {
+      const newState = getConditionState(userCreatedAtMs);
+
+      // PRE → ACTIVE   (start condition)
+      if (lastState === "pre" && newState === "active") {
+        window.location.href = "/";
+      }
+
+      // ACTIVE → POST  (end of condition)
+      if (lastState === "active" && newState === "post") {
+        window.location.href = "/";
+      }
+
+      lastState = newState;
+    }, 1000);
+
   script(src='/public/js/script.js')
   script(src='/public/js/postFunctionalities.js')
