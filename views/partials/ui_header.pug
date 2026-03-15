@@ -6,7 +6,7 @@
       .right.menu
         if !user
           a.item(href=process.env.POST_SURVEY_WITH_QUALTRICS ? `/login?r_id=${r_id}`: '/login') Log In
-          a.item(href=process.env.POST_SURVEY_WITH_QUALTRICS ? `/signup?r_id=${r_id}`: '/signup') Create Account
+          //- a.item(href=process.env.POST_SURVEY_WITH_QUALTRICS ? `/signup?r_id=${r_id}`: '/signup') Create Account
         else
           if user.consent
             if(showNewPostIcon)
