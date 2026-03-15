@@ -151,7 +151,7 @@ exports.getScript = async (req, res, next) => {
     // ✅ Nothing for Pug to calculate anymore
     res.render("script", {
       script: finalfeed,
-      showNewPostIcon: true,
+      showNewPostIcon: false,
       userCreatedAt: createdAtDate,
     });
   } catch (err) {
