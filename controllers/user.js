@@ -42,8 +42,7 @@ exports.postLogin = async (req, res, next) => {
             mturkID,
             active: true,
             createdAt: currDate,
-            lastNotifyVisit: currDate,
-            consent: true
+            lastNotifyVisit: currDate
         });
         await user.save();
         }
@@ -61,7 +60,8 @@ exports.postLogin = async (req, res, next) => {
 
             user.logUser(Date.now(), userAgent, user_ip);
 
-            return res.redirect(req.session.returnTo || '/');
+            // return res.redirect(req.session.returnTo || '/');
+            return res.redirect('/account/signup_info');
         });
     } catch (err) {
         next(err);
