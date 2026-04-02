@@ -60,7 +60,7 @@ exports.getScript = async (req, res, next) => {
     }
 
     const currentCondition = computeCondition(user.createdAt, 180000, 4); // 15000 for testing, 180000 for real
-    const condState = getConditionState(user.createdAt, 180000, 4); // 15000 for testing, 180000 for real
+    const condState = getConditionState(user, 180000, 4); // 15000 for testing, 180000 for real
     console.log("Condition window →", condState);
 
     // END OF EXPERIMENT — after condition 4 finishes
@@ -166,8 +166,11 @@ function computeCondition(startTime, windowMs = 180000, totalConditions = 4) {
   return index + 1;
 }
 
-function getConditionState(startTime, windowMs = 180000, totalConditions = 4) {
-  const elapsed = Date.now() - new Date(startTime).getTime();
+function getConditionState(user, windowMs = 180000, totalConditions = 4) {
+  if ( !user.conditionStart ) return { state: "pre", condition: user.condition};
+
+  const elapsed = Date.now() - new Date(user.conditionStart).getTime();
+
   const cycleLength = windowMs;
   const fullExperimentDuration = totalConditions * windowMs;
 
@@ -179,8 +182,12 @@ function getConditionState(startTime, windowMs = 180000, totalConditions = 4) {
   const currentIndex = Math.floor(elapsed / cycleLength) % totalConditions;
   const elapsedInCycle = elapsed % cycleLength;
 
-  if (elapsedInCycle < 3000) return { state: "pre", condition: currentIndex + 1 };
-  if (elapsedInCycle > cycleLength - 3000) return { state: "post", condition: currentIndex + 1 };
+  if (elapsedInCycle < 1) return { state: "pre", condition: currentIndex + 1 };
+  if (elapsedInCycle > cycleLength - 1) {
+    user.condition += 1;
+    user.save();
+    return { state: "post", condition: currentIndex + 1 };
+  }
   return { state: "active", condition: currentIndex + 1 };
 }
 
@@ -236,6 +243,7 @@ exports.newPost = async(req, res) => {
                 }
             }
             user.posts.unshift(post); // Add most recent user-made post to the beginning of the array
+            user.conditionStart = Date.now();
             await user.save();
             res.redirect('/');
         } else {

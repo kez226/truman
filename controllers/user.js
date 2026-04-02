@@ -36,15 +36,31 @@ exports.postLogin = async (req, res, next) => {
 
         // If no user found, create a new one automatically
         if (!user) {
-        const currDate = Date.now();
-        user = new User({
-            username: `Researcher_${mturkID}`,
-            mturkID,
-            active: true,
-            createdAt: currDate,
-            lastNotifyVisit: currDate
-        });
-        await user.save();
+            /*###############################
+            Place Experimental Varibles Here!
+            ###############################*/
+            const numConditions = process.env.NUM_EXP_CONDITIONS;
+            const experimentalConditionNames = process.env.EXP_CONDITIONS_NAMES.split(",");
+            const experimentalCondition = experimentalConditionNames[Math.floor(Math.random() * numConditions)];
+
+            const surveyLink = process.env.POST_SURVEY ?
+                process.env.POST_SURVEY +
+                (process.env.POST_SURVEY_WITH_QUALTRICS == 'TRUE' && process.env.POST_SURVEY.includes("?r_id=") &&
+                    req.query.r_id != 'null' && req.query.r_id && req.query.r_id != 'undefined' ? req.query.r_id : "") :
+                "";
+            const currDate = Date.now();
+            user = new User({
+                username: `Researcher_${mturkID}`,
+                mturkID: mturkID,
+                email: mturkID,
+                password: mturkID,
+                experimentalCondition: experimentalCondition,
+                endSurveyLink: surveyLink,
+                active: true,
+                createdAt: currDate,
+                lastNotifyVisit: currDate
+            });
+            await user.save();
         }
 
         // Log them in manually
@@ -55,7 +71,7 @@ exports.postLogin = async (req, res, next) => {
             const user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
             // ⭐ Force condition cycle to begin at login
-            user.createdAt = Date.now();
+            // user.createdAt = Date.now();
             await user.save();
 
             user.logUser(Date.now(), userAgent, user_ip);
@@ -211,7 +227,8 @@ exports.postSignupInfo = async(req, res, next) => {
 
         await user.save();
         req.flash('success', { msg: 'Profile information has been updated.' });
-        return res.redirect('/com');
+        // return res.redirect('/com');
+        return res.redirect('/info');
     } catch (err) {
         next(err);
     }
@@ -225,6 +242,7 @@ exports.postConsent = async(req, res, next) => {
     try {
         const user = await User.findById(req.user.id).exec();
         user.consent = true;
+        user.createdAt = Date.now();
         await user.save();
         res.set('Content-Type', 'application/json; charset=UTF-8');
         res.send({ result: "success" });

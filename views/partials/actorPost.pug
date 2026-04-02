@@ -4,7 +4,7 @@
     .right.floated.time.meta= val.display_time || val.time
 
     a(href='/user/'+val.actor.username)     
-      img.ui.avatar.image(src='/public/picture.svg', data-src=cdn+"/profile_pictures/"+val.actor.profile.picture)
+      img.ui.avatar.image(src="/profile_pictures/"+val.actor.profile.picture)
       span=val.actor.profile.name
   .content.dimmable(class=val.flagged ? "dimmed": "")
     //- .ui.dimmer.flag(class=val.flagged ? "active": "")
@@ -19,7 +19,7 @@
     //-         i.flag.icon
     //-         |  Unflag
     .img.post.image
-      img(src='/public/picture.svg', data-src=cdn+"/post_pictures/"+val.picture, style="max-width:100%; width:100%;")
+      img(src="/post_pictures/"+val.picture, style="max-width:100%; width:100%;")
     .description=val.body
     .myTimer.hidden 0
   .ui.bottom.three.attached.icon.buttons
