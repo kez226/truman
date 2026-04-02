@@ -56,11 +56,11 @@ exports.getScript = async (req, res, next) => {
     const current_day = Math.floor(time_diff / one_day);
     if (current_day < process.env.NUM_DAYS) {
       user.study_days[current_day] += 1;
-      user.save();
+      await user.save();
     }
 
-    const currentCondition = computeCondition(user.createdAt, 180000, 4); // 15000 for testing, 180000 for real
-    const condState = getConditionState(user, 180000, 4); // 15000 for testing, 180000 for real
+    const currentCondition = computeCondition(user.createdAt, 15000, 4); // 15000 for testing, 180000 for real
+    const condState = await getConditionState(user, 15000, 4); // 15000 for testing, 180000 for real
     console.log("Condition window →", condState);
 
     // END OF EXPERIMENT — after condition 4 finishes
@@ -85,6 +85,8 @@ exports.getScript = async (req, res, next) => {
 
     // Post condition page
     if (condState.state === "post") {
+      user.condition += 1;
+      await user.save();
       return res.render("condition_gate", {
         title: "Condition Finished",
         message: "Please wait for further instructions...",
@@ -152,7 +154,7 @@ exports.getScript = async (req, res, next) => {
     res.render("script", {
       script: finalfeed,
       showNewPostIcon: false,
-      userCreatedAt: createdAtDate,
+      conditionStartTime: user.conditionStart,
     });
   } catch (err) {
     next(err);
@@ -183,9 +185,7 @@ function getConditionState(user, windowMs = 180000, totalConditions = 4) {
   const elapsedInCycle = elapsed % cycleLength;
 
   if (elapsedInCycle < 1) return { state: "pre", condition: currentIndex + 1 };
-  if (elapsedInCycle > cycleLength - 1) {
-    user.condition += 1;
-    user.save();
+  if (elapsedInCycle > cycleLength - 3000) {
     return { state: "post", condition: currentIndex + 1 };
   }
   return { state: "active", condition: currentIndex + 1 };

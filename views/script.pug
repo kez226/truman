@@ -56,13 +56,13 @@ block scripts
       const elapsed = Date.now() - clientStart;
       const elapsedInCycle = elapsed % windowMs;
 
-      if (elapsedInCycle < 3000) return "pre";
+      if (elapsedInCycle < 1) return "pre";
       if (elapsedInCycle > windowMs - 3000) return "post";
       return "active";
     }
 
     // Load start time from server
-    const userCreatedAtMs = new Date("#{userCreatedAt.toISOString()}").getTime();
+    const userCreatedAtMs = new Date("#{conditionStartTime.toISOString()}").getTime();
 
     let lastState = getConditionState(userCreatedAtMs);
 
@@ -81,7 +81,7 @@ block scripts
       }
 
       lastState = newState;
-    }, 1000);
+    }, 3000);
 
   script(src='/public/js/script.js')
   script(src='/public/js/postFunctionalities.js')
