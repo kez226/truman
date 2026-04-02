@@ -59,8 +59,8 @@ exports.getScript = async (req, res, next) => {
       await user.save();
     }
 
-    const currentCondition = computeCondition(user.createdAt, 15000, 4); // 15000 for testing, 180000 for real
-    const condState = await getConditionState(user, 15000, 4); // 15000 for testing, 180000 for real
+    const currentCondition = computeCondition(user.createdAt, 180000, 4); // 15000 for testing, 180000 for real
+    const condState = await getConditionState(user, 180000, 4); // 15000 for testing, 180000 for real
     console.log("Condition window →", condState);
 
     // END OF EXPERIMENT — after condition 4 finishes
@@ -76,7 +76,7 @@ exports.getScript = async (req, res, next) => {
     // Pre condition page
     if (condState.state === "pre") {
       return res.render("condition_gate", {
-        title: "Before Condition",
+        title: "Before Session",
         message: "Please make a post before interacting.",
         button: "Continue",
         userCreatedAt: user.createdAt
@@ -88,7 +88,7 @@ exports.getScript = async (req, res, next) => {
       user.condition += 1;
       await user.save();
       return res.render("condition_gate", {
-        title: "Condition Finished",
+        title: "Session Finished",
         message: "Please wait for further instructions...",
         button: "Continue", 
         userCreatedAt: user.createdAt
