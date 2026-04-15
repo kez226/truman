@@ -9,9 +9,35 @@ block content
     p(style="font-size: 1.2rem; color: #555; margin-bottom: 40px; white-space: pre-line;")
       | #{message}
 
-    // SHOW BUTTON ONLY IF button != null
-    if button
+    if message == "Please make a post before interacting."
+      //- #newpost.ui.fluid.left.labeled.right.icon.input
+      //- .ui.label
+      //-   if user.profile.picture
+      //-     img.ui.avatar.image(src='/user_avatar/'+user.profile.picture)
+      //-   else
+      //-     img.ui.avatar.image(src=user.gravatar(60))
+      //- input(type='text', placeholder='Create a post')
+      //- i.big.photo.link.icon
+
+      //- .ui.tiny.post.modal
+      //- i.close.icon
+      //- .header Add a New Post
+      .scrolling.content
+        form#postform.ui.feed.form(action='/post/new', method='POST', enctype='multipart/form-data')
+          input(type='hidden', name='_csrf', value=_csrf)
+          .field
+            textarea(rows='2', placeholder='Create Post', name='body')
+          .field.image-upload
+            label(for='picinput')
+              .image.content
+                img#imgInp.ui.fluid.image(src='/public/photo-camera.svg')
+            input#picinput(type='file', accept='image/*', name='picinput')
+      .actions
+        input.ui.big.primary.button(type='submit', form='postform', value='Submit')
+    //- SHOW BUTTON ONLY IF button != null and not on the make new post part
+    else if button
       form(method="get" action="/")
+        input(type="hidden" name="action" value="continue")
         button.ui.big.primary.button(type="submit" style="padding: 14px 28px; font-size: 1.2rem;")
           | #{button}
     else

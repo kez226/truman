@@ -24,6 +24,9 @@ const userSchema = new mongoose.Schema({
     lastNotifyVisit: Date, // Absolute Time; Indicates the most recent visit to /notifications. First initialization is at account creation.
     createdAt: Date, // Absolute Time the user was created
     consent: { type: Boolean, default: false }, // Indicates if user has proceeded through the Welcome & community rule pages
+    conditionStart: { type: Date, default: null }, // Used to calculate conditions instead of createdAt, set when the user creates a new post and the condition is supposed to start
+    condition: { type: Number, default: 1 }, // condition that the user is currently in, is incremented after the set amount of time has passed
+
 
     mturkID: { type: String, unique: true }, // MTurkID
     ResponseID: { type: String, unique: false }, // Qualtric's ResponseID

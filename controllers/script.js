@@ -56,11 +56,22 @@ exports.getScript = async (req, res, next) => {
     const current_day = Math.floor(time_diff / one_day);
     if (current_day < process.env.NUM_DAYS) {
       user.study_days[current_day] += 1;
-      user.save();
+      await user.save();
     }
 
-    const currentCondition = computeCondition(user.createdAt, 180000, 4); // 15000 for testing, 180000 for real
-    const condState = getConditionState(user.createdAt, 180000, 4); // 15000 for testing, 180000 for real
+    if (req.query.action === "continue" && user.condition <= 4) {
+      console.log("continue");
+      return res.render("condition_gate", {
+        title: "Before Session",
+        message: "Please make a post before interacting.",
+        button: "Continue",
+        userCreatedAt: user.createdAt
+      });
+    }
+
+    // const currentCondition = computeCondition(user.createdAt, 15000, 4); // 15000 for testing, 180000 for real
+    const currentCondition = user.condition;
+    const condState = await getConditionState(user, 180000, 4); // 15000 for testing, 180000 for real
     console.log("Condition window →", condState);
 
     // END OF EXPERIMENT — after condition 4 finishes
@@ -76,7 +87,7 @@ exports.getScript = async (req, res, next) => {
     // Pre condition page
     if (condState.state === "pre") {
       return res.render("condition_gate", {
-        title: "Before Condition",
+        title: "Before Session",
         message: "Please make a post before interacting.",
         button: "Continue",
         userCreatedAt: user.createdAt
@@ -85,8 +96,10 @@ exports.getScript = async (req, res, next) => {
 
     // Post condition page
     if (condState.state === "post") {
+      user.condition += 1;
+      await user.save();
       return res.render("condition_gate", {
-        title: "Condition Finished",
+        title: "Session Finished",
         message: "Please wait for further instructions...",
         button: "Continue", 
         userCreatedAt: user.createdAt
@@ -151,8 +164,8 @@ exports.getScript = async (req, res, next) => {
     // ✅ Nothing for Pug to calculate anymore
     res.render("script", {
       script: finalfeed,
-      showNewPostIcon: true,
-      userCreatedAt: createdAtDate,
+      showNewPostIcon: false,
+      conditionStartTime: user.conditionStart,
     });
   } catch (err) {
     next(err);
@@ -166,22 +179,31 @@ function computeCondition(startTime, windowMs = 180000, totalConditions = 4) {
   return index + 1;
 }
 
-function getConditionState(startTime, windowMs = 180000, totalConditions = 4) {
-  const elapsed = Date.now() - new Date(startTime).getTime();
-  const cycleLength = windowMs;
-  const fullExperimentDuration = totalConditions * windowMs;
+function getConditionState(user, windowMs = 180000, totalConditions = 4) {
+  if ( !user.conditionStart ) return { state: "pre", condition: user.condition};
 
-  // AFTER ALL CONDITIONS
-  if (elapsed >= fullExperimentDuration) {
+  const elapsed = Date.now() - new Date(user.conditionStart).getTime();
+
+  // const cycleLength = windowMs;
+  // const fullExperimentDuration = totalConditions * windowMs;
+
+  // // AFTER ALL CONDITIONS
+  // if (elapsed >= fullExperimentDuration) {
+  //     return { state: "ended", condition: totalConditions };
+  // }
+
+  if (user.condition > totalConditions) {
       return { state: "ended", condition: totalConditions };
   }
   
-  const currentIndex = Math.floor(elapsed / cycleLength) % totalConditions;
-  const elapsedInCycle = elapsed % cycleLength;
-
-  if (elapsedInCycle < 3000) return { state: "pre", condition: currentIndex + 1 };
-  if (elapsedInCycle > cycleLength - 3000) return { state: "post", condition: currentIndex + 1 };
-  return { state: "active", condition: currentIndex + 1 };
+  // const currentIndex = Math.floor(elapsed / cycleLength) % totalConditions;
+  const elapsedInCycle = elapsed % windowMs;
+  
+  if (elapsedInCycle < 1) return { state: "pre", condition: user.condition};
+  if (elapsedInCycle > windowMs - 3000) {
+    return { state: "post", condition: user.condition };
+  }
+  return { state: "active", condition: user.condition };
 }
 
 
@@ -236,6 +258,7 @@ exports.newPost = async(req, res) => {
                 }
             }
             user.posts.unshift(post); // Add most recent user-made post to the beginning of the array
+            user.conditionStart = Date.now();
             await user.save();
             res.redirect('/');
         } else {

@@ -97,7 +97,7 @@ async function doPopulate() {
                     resolve("done");
                 });
             });
-        }).then(function(result) { //Convert the comments csv file to json, store in comment_list\
+        }).then(function(result) { //Convert the notifications csv file to json, store in notification_list\
             return new Promise((resolve, reject) => {
                 console.log(color_start, "Reading notification list...");
                 CSVToJSON().fromFile(notifications_inputFile).then(function(json_array) {
@@ -233,6 +233,9 @@ async function doPopulate() {
                                 const replyTime = new_reply.time ? timeStringToNum(new_reply.time) : null;
                                 if (pr.time && replyTime !== null && pr.time > replyTime) {
                                     console.log(color_error, "ERROR: The simulated time for this comment (commentID: " + new_reply.id + ") is before the simulated time of the post.");
+                                    console.log(color_error, "ERROR: commentTime: " + new_reply.time);
+                                    console.log(color_error, "ERROR: postTime: " + pr.time);
+                                    console.log(color_error, "ERROR: postID: " + pr.postID);
                                     callback(err);
                                 }
                                 const comment_detail = {

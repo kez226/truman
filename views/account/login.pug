@@ -12,15 +12,15 @@ block content
       form.ui.form(action='/login', method='POST')
         input(type='hidden', name='_csrf', value=_csrf)
         .field
-          label(for='mturkID') MTurk ID
-          input(type='text', name='mturkID', id='mturkID', placeholder='Enter your MTurk ID', required)
+          label(for='mturkID') Participant ID
+          input(type='text', name='mturkID', id='mturkID', placeholder='Enter your Participant ID', required)
         button.ui.large.button.blue(type='submit') Log In
-      .ui.horizontal.divider
-        | Or
-      .center.aligned.column
-        .ui.big.green.labeled.icon.button.signup
-          i.signup.icon
-          |   Create Account
+      //- .ui.horizontal.divider
+      //-   | Or
+      //- .center.aligned.column
+      //-   .ui.big.green.labeled.icon.button.signup
+      //-     i.signup.icon
+      //-     |   Create Account
 
   // Popup container (hidden by default)
   .ui.basic.modal#studyPopup
