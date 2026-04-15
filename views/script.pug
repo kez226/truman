@@ -16,8 +16,14 @@ block content
           img.ui.avatar.image(src='/user_avatar/'+user.profile.picture)
         else
           img.ui.avatar.image(src=user.gravatar(60))
-      input(type='text', placeholder='Create a post')
-      i.big.photo.link.icon
+
+      //- Disabled input to create new post, since we want to gate posting behind the condition
+      input(type='text', placeholder='Create a post', disabled)
+      //- Disabled photo upload icon for the same reason
+      i.big.photo.icon
+      //- i.big.photo.link.icon
+
+      //- To undo, remove "disabled" from the input and change the icon to "link" version
     each val in script
       if val.relativeTime 
         //- This is a User made post
@@ -33,7 +39,7 @@ block content
 
   .computer.only.tablet.only.four.wide.column
     
-  .ui.tiny.post.modal
+  //- .ui.tiny.post.modal
     i.close.icon
     .header Add a New Post
     .scrolling.content

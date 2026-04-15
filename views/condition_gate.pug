@@ -33,11 +33,11 @@ block content
                 img#imgInp.ui.fluid.image(src='/public/photo-camera.svg')
             input#picinput(type='file', accept='image/*', name='picinput')
       .actions
-        input.ui.green.button(type='submit', form='postform', value='Submit')
-
-    // SHOW BUTTON ONLY IF button != null
-    if button
+        input.ui.big.primary.button(type='submit', form='postform', value='Submit')
+    //- SHOW BUTTON ONLY IF button != null and not on the make new post part
+    else if button
       form(method="get" action="/")
+        input(type="hidden" name="action" value="continue")
         button.ui.big.primary.button(type="submit" style="padding: 14px 28px; font-size: 1.2rem;")
           | #{button}
     else

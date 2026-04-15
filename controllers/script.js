@@ -59,7 +59,18 @@ exports.getScript = async (req, res, next) => {
       await user.save();
     }
 
-    const currentCondition = computeCondition(user.createdAt, 180000, 4); // 15000 for testing, 180000 for real
+    if (req.query.action === "continue" && user.condition <= 4) {
+      console.log("continue");
+      return res.render("condition_gate", {
+        title: "Before Session",
+        message: "Please make a post before interacting.",
+        button: "Continue",
+        userCreatedAt: user.createdAt
+      });
+    }
+
+    // const currentCondition = computeCondition(user.createdAt, 15000, 4); // 15000 for testing, 180000 for real
+    const currentCondition = user.condition;
     const condState = await getConditionState(user, 180000, 4); // 15000 for testing, 180000 for real
     console.log("Condition window →", condState);
 
@@ -173,22 +184,26 @@ function getConditionState(user, windowMs = 180000, totalConditions = 4) {
 
   const elapsed = Date.now() - new Date(user.conditionStart).getTime();
 
-  const cycleLength = windowMs;
-  const fullExperimentDuration = totalConditions * windowMs;
+  // const cycleLength = windowMs;
+  // const fullExperimentDuration = totalConditions * windowMs;
 
-  // AFTER ALL CONDITIONS
-  if (elapsed >= fullExperimentDuration) {
+  // // AFTER ALL CONDITIONS
+  // if (elapsed >= fullExperimentDuration) {
+  //     return { state: "ended", condition: totalConditions };
+  // }
+
+  if (user.condition > totalConditions) {
       return { state: "ended", condition: totalConditions };
   }
   
-  const currentIndex = Math.floor(elapsed / cycleLength) % totalConditions;
-  const elapsedInCycle = elapsed % cycleLength;
-
-  if (elapsedInCycle < 1) return { state: "pre", condition: currentIndex + 1 };
-  if (elapsedInCycle > cycleLength - 3000) {
-    return { state: "post", condition: currentIndex + 1 };
+  // const currentIndex = Math.floor(elapsed / cycleLength) % totalConditions;
+  const elapsedInCycle = elapsed % windowMs;
+  
+  if (elapsedInCycle < 1) return { state: "pre", condition: user.condition};
+  if (elapsedInCycle > windowMs - 3000) {
+    return { state: "post", condition: user.condition };
   }
-  return { state: "active", condition: currentIndex + 1 };
+  return { state: "active", condition: user.condition };
 }
 
 
