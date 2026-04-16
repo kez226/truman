@@ -6,6 +6,8 @@ const _ = require('lodash');
 const dotenv = require('dotenv');
 dotenv.config({ path: '.env' }); // See the file .env.example for the structure of .env
 
+let script_feed = [];
+
 /**
  * GET /
  * Fetch and render newsfeed.
@@ -106,45 +108,113 @@ exports.getScript = async (req, res, next) => {
       });
     }
 
-    let script_feed = [];
-  if (condState.state === "active") {
-    script_feed = await Script.find({
-      condition: String(currentCondition),
-      $or: [
-        { display_time: { $ne: null } },
-        { time: { $lte: time_diff, $gte: 0 } }
-      ],
-    })
-      .sort({ time: -1 })
-      .populate({
-        path: "actor",
-        select: "username profile",
-        populate: { path: "profile", select: "name picture" },
-      })
-      .populate({
-        path: "comments.actor",
-        select: "username profile",
-        populate: { path: "profile", select: "name picture" },
-      })
-      .exec();
+    if (condState.state === "active") {
+      if (script_feed.length === 0) {
+        script_feed = await Script.find({
+          condition: String(currentCondition),
+          $or: [
+            { display_time: { $ne: null } },
+            { time: { $lte: time_diff, $gte: 0 } }
+          ],
+        })
+        .sort({ time: -1 })
+        .populate({
+          path: "actor",
+          select: "username profile",
+          populate: { path: "profile", select: "name picture" },
+        })
+        .populate({
+          path: "comments.actor",
+          select: "username profile",
+          populate: { path: "profile", select: "name picture" },
+        })
+        .exec();
 
-    // compute display_time only when active
-    for (const post of script_feed) {
-      if (!post.display_time) {
-        const offset = Number(post.time) || 0;
-        post.display_time = new Date(baseTime + offset).toLocaleString();
-      }
+        // compute display_time only when active
+        for (const post of script_feed) {
 
-      if (Array.isArray(post.comments)) {
-        post.comments.forEach((c) => {
-          if (!c.display_time) {
-            const offset = Number(c.time) || 0;
-            c.display_time = new Date(baseTime + offset).toLocaleString();
+          const now = new Date();
+
+          if (!post.display_time) {
+            const offset = Number(post.time) || 0;
+            post.display_time = new Date(baseTime + offset).toLocaleString();
+          }else{
+            const max = Number(post.display_time) * 24 * 60*60*1000;
+            const offset = Math.random() * max;
+            post.display_time = new Date(now - offset).toLocaleString();
           }
-        });
+
+          if (Array.isArray(post.comments)) {
+            post.comments.forEach((c) => {
+              if (!c.display_time) {
+                const offset = Number(c.time) || 0;
+                c.display_time = new Date(baseTime + offset).toLocaleString();
+              }
+              // else{
+              //   const max = Number(post.display_time) * 24 * 60*60*1000;
+              //   const offset = Math.random() * max;
+              //   post.display_time = new Date(now - offset);
+              // }
+            });
+          }
+        }
+      } 
+      else{
+        // Already gotten script_feed once, just need to check for condition or time changes
+        let script_feed_addition = await Script.find({
+          condition: String(currentCondition),
+          $or: [
+            { time: { $lte: time_diff, $gte: 0 } }
+          ],
+        })
+        .sort({ time: -1 })
+        .populate({
+          path: "actor",
+          select: "username profile",
+          populate: { path: "profile", select: "name picture" },
+        })
+        .populate({
+          path: "comments.actor",
+          select: "username profile",
+          populate: { path: "profile", select: "name picture" },
+        })
+        .exec();
+
+        for (const post of script_feed_addition) {
+
+          const now = new Date();
+
+          if (!post.display_time) {
+            const offset = Number(post.time) || 0;
+            post.display_time = new Date(baseTime + offset).toLocaleString();
+          }else{
+            const max = Number(post.display_time) * 24 * 60*60*1000;
+            const offset = Math.random() * max;
+            post.display_time = new Date(now - offset).toLocaleString();
+          }
+
+          if (Array.isArray(post.comments)) {
+            post.comments.forEach((c) => {
+              if (!c.display_time) {
+                const offset = Number(c.time) || 0;
+                c.display_time = new Date(baseTime + offset).toLocaleString();
+              }
+              // else{
+              //   const max = Number(post.display_time) * 24 * 60*60*1000;
+              //   const offset = Math.random() * max;
+              //   post.display_time = new Date(now - offset);
+              // }
+            });
+          }
+        }
+
+        script_feed.filter(post => post.condition === String(currentCondition));
+        script_feed = script_feed.concat(script_feed_addition);
+
       }
     }
-  }
+
+    console.log(script_feed[1]);
 
     let user_posts = user.getPostInPeriod(time_limit, time_diff);
     user_posts.sort((a, b) => b.relativeTime - a.relativeTime);
