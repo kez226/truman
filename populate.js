@@ -185,6 +185,7 @@ async function doPopulate() {
                                 likes: new_post.likes || getLikes(),
                                 actor: act,
                                 time: timeStringToNum(new_post.time),
+                                // display_time: getRandomPastDate(),
                                 display_time: new_post.display_time || null, // <-- NEW FIELD ADDED BY VICKY
                                 class: new_post.class,
                                 condition: new_post.condition
@@ -293,12 +294,21 @@ async function doPopulate() {
             console.log(color_start, "Starting to populate notifications (replies) collection...");
             return new Promise((resolve, reject) => {
                 async.each(notification_reply_list, async function(new_notify, callback) {
+                        if (!new_notify.actor || !new_notify.time) {
+                            console.log(color_error, "Skipping malformed notification(reply) row:", new_notify);
+                            return;
+                        }
                         const act = await Actor.findOne({ username: new_notify.actor }).exec();
                         if (act) {
+                            const replyTime = timeStringToNum(new_notify.time);
+                            if (replyTime === null) {
+                                console.log(color_error, "Skipping notification(reply) with invalid time:", new_notify);
+                                return;
+                            }
                             const notifydetail = {
                                 actor: act,
                                 notificationType: 'reply',
-                                time: timeStringToNum(new_notify.time),
+                                time: replyTime,
                                 userPostID: new_notify.userPostID,
                                 replyBody: new_notify.body,
                                 class: new_notify.class,
@@ -337,12 +347,21 @@ async function doPopulate() {
             console.log(color_start, "Starting to populate notifications (likes, reads) collection...");
             return new Promise((resolve, reject) => {
                 async.each(notification_list, async function(new_notify, callback) {
+                        if (!new_notify.actor || !new_notify.type || !new_notify.time) {
+                            console.log(color_error, "Skipping malformed notification row:", new_notify);
+                            return;
+                        }
                         const act = await Actor.findOne({ username: new_notify.actor }).exec();
                         if (act) {
+                            const notificationTime = timeStringToNum(new_notify.time);
+                            if (notificationTime === null) {
+                                console.log(color_error, "Skipping notification with invalid time:", new_notify);
+                                return;
+                            }
                             const notifydetail = {
                                 actor: act,
                                 notificationType: new_notify.type,
-                                time: timeStringToNum(new_notify.time),
+                                time: notificationTime,
                                 class: new_notify.class,
                                 condition: new_notify.condition
                             };
@@ -393,6 +412,9 @@ String.prototype.capitalize = function() {
 //Positive numbers indicate future posts (after they joined), Negative numbers indicate past posts (before they joined)
 //Format: (+/-)HH:MM
 function timeStringToNum(v) {
+    if (typeof v !== 'string' || !v.trim()) {
+        return null;
+    }
     var timeParts = v.split(":");
     if (timeParts[0] == "-0")
     // -0:XX
